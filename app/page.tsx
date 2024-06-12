@@ -15,6 +15,12 @@ const HomePage = () => {
 
   const handleLogin = async () => {
     try {
+
+      if (username.length < 1 || password.length < 6 ) {
+        toast.error('Enter valid credentials');
+        return;
+      }
+  
       const response = await axios.post('/api/auth/login', {
         username: username,
         password: password,
