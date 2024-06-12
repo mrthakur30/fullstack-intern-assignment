@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { setToken } from '@/redux/auth/auth.slice';
+import { FormEvent, useState } from 'react';
+import { setToken, setUser } from '@/redux/auth/auth.slice';
 import useAuthSession from '../hooks/useAuthSession';
 import { useAppDispatch } from '@/redux/store';
+import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
 
 const HomePage = () => {
   const [username, setUsername] = useState('');
@@ -12,8 +14,32 @@ const HomePage = () => {
   const user = useAuthSession();
 
   const handleLogin = async () => {
-    // Implement the logic to authenticate the user
-  };
+    try {
+      const response = await axios.post('/api/auth/login', {
+        username: username,
+        password: password,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+
+      const data = await response.data
+
+      dispatch(setToken(data.token));
+      dispatch(setUser(data.user));
+
+      setUsername('');
+      setPassword('');
+
+      toast.success(data.message);
+
+    } catch (error: any) {
+      toast.error(error.response.data.message ? error.response.data.message : error.message);
+    }
+  }
+
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -30,14 +56,15 @@ const HomePage = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
-              className="w-full px-4 py-2 mt-4 border rounded-md"
+              className="w-full px-4 py-2 mt-4 border text-black rounded-md"
             />
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
               placeholder="Password"
-              className="w-full px-4 py-2 mt-4 border rounded-md"
+              className="w-full px-4 py-2 mt-4 border text-black rounded-md"
             />
             <button
               onClick={handleLogin}
@@ -53,12 +80,13 @@ const HomePage = () => {
             <code>
               {`const { user } = useAuthSession();
 if (user) {
-  console.log('User:', user.username);
+  console.log('User:', ${user?.username});
 }`}
             </code>
           </pre>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 };
